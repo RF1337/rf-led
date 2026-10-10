@@ -4,6 +4,8 @@
 #include "leds/led_driver.h"
 #include "controller/controller.h"
 #include <Adafruit_NeoPixel.h>
+#include "network/wifi.h"
+#include "network/api.h"
 
 void setup() {
   Serial.begin(115200);
@@ -13,9 +15,13 @@ void setup() {
   pinMode(ONBOARD_LED, OUTPUT);
 
   ledsBegin();
+
+  connectToWiFi();
+  apiBegin();
 }
 
 void loop() {
+  apiLoop();
 
   if (current_led_state.on) {
     ledsSetBrightness(current_led_state.brightness);
