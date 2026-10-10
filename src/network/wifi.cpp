@@ -2,28 +2,60 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include "secrets.h"
+#include "network/wifi.h"
+#include "storage/storage.h"
 
-const char* ssid = WIFI_SSID;
-const char* password = WIFI_PASSWORD;
-
-void connectToWiFi()
+enum class WifiState
 {
-    WiFi.begin(ssid, password);
+    Connecting,
+    Connected,
+    ApMode
+};
 
-    Serial.print("Connecting to WiFi");
+WifiState wifiState;
+uint32_t connectStart;
 
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(500);
-        Serial.print(".");
-    }
-
-    Serial.println("\nConnected!");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
+void startAP(){
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP("rf-led", "rfled123");
+    Serial.println("Started AP mode. Connect to rf-led with password rfled123");
+    Serial.print("AP IP address: ");
+    Serial.println(WiFi.softAPIP());
+    wifiState = WifiState::ApMode;
 }
 
-void updateWiFi()
+void wifiBegin()
 {
+    String ssid, password;
+
+    if (!loadWifiCredentials(ssid, password)) {
+        Serial.println("No WiFi credentials found. Starting AP mode.");
+        startAP();
+        return;
+    } 
+    else
+    {
+        WiFi.mode(WIFI_STA);
+        WiFi.begin(ssid.c_str(), password.c_str());
+        connectStart = millis();
+        wifiState = WifiState::Connecting;
+    }
+}
+
+void wifiLoop()
+{
+    if (wifiState == WifiState::Connecting)
+    {
+        if (WiFi.status() == WL_CONNECTED)
+        {
+            Serial.print("Connected to WiFi. IP address: ");
+            Serial.println(WiFi.localIP());
+            wifiState = WifiState::Connected;
+        }
+        else if (millis() - connectStart > 15000) // 15 seconds timeout
+        {
+            Serial.println("Failed to connect to WiFi. Starting AP mode.");
+            startAP();
+        }
+    }
 }

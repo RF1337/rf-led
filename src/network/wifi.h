@@ -1,4 +1,4 @@
 #pragma once
 
-void connectToWiFi();
-void updateWiFi();
+void wifiBegin();
+void wifiLoop();

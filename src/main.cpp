@@ -6,6 +6,7 @@
 #include <Adafruit_NeoPixel.h>
 #include "network/wifi.h"
 #include "network/api.h"
+#include "storage/storage.h"
 
 void setup() {
   Serial.begin(115200);
@@ -16,11 +17,12 @@ void setup() {
 
   ledsBegin();
 
-  connectToWiFi();
+  wifiBegin();
   apiBegin();
 }
 
 void loop() {
+  wifiLoop();
   apiLoop();
 
   if (current_led_state.on) {
