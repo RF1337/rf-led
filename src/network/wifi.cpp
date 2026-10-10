@@ -4,6 +4,10 @@
 #include <WiFi.h>
 #include "network/wifi.h"
 #include "storage/storage.h"
+#include <DNSServer.h>
+
+#define DNS_PORT 53
+DNSServer dnsServer;
 
 enum class WifiState
 {
@@ -18,6 +22,7 @@ uint32_t connectStart;
 void startAP(){
     WiFi.mode(WIFI_AP);
     WiFi.softAP("rf-led", "rfled123");
+    dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
     Serial.println("Started AP mode. Connect to rf-led with password rfled123");
     Serial.print("AP IP address: ");
     Serial.println(WiFi.softAPIP());
@@ -57,5 +62,10 @@ void wifiLoop()
             Serial.println("Failed to connect to WiFi. Starting AP mode.");
             startAP();
         }
+    }
+
+    if (wifiState == WifiState::ApMode)
+    {
+        dnsServer.processNextRequest();
     }
 }

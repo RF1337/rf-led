@@ -51,6 +51,11 @@ void sendState() {
   server.send(200, "application/json", response);
 }
 
+void handleNotFound() {
+  server.sendHeader("Location", "http://" + WiFi.softAPIP().toString() + "/", true);
+  server.send(302, "text/plain", "");
+}
+
 void handleGetState() {
   sendState();
 }
@@ -106,6 +111,7 @@ void apiBegin() {
   server.on("/wifi", HTTP_POST, handleSaveWifi);
   server.on("/api/state", HTTP_GET, handleGetState);
   server.on("/api/state", HTTP_POST, handleSetState);
+  server.onNotFound(handleNotFound);
   server.begin();
 }
 
