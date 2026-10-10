@@ -5,6 +5,9 @@
 #include "network/wifi.h"
 #include "storage/storage.h"
 #include <DNSServer.h>
+#include <ESPmDNS.h>
+
+#define HOSTNAME "rf-led"   // reachable as http://rf-led.local
 
 #define DNS_PORT 53
 DNSServer dnsServer;
@@ -40,6 +43,7 @@ void wifiBegin()
     } 
     else
     {
+        WiFi.setHostname(HOSTNAME);  // name shown in the router's device list
         WiFi.mode(WIFI_STA);
         WiFi.begin(ssid.c_str(), password.c_str());
         connectStart = millis();
@@ -55,6 +59,14 @@ void wifiLoop()
         {
             Serial.print("Connected to WiFi. IP address: ");
             Serial.println(WiFi.localIP());
+
+            if (MDNS.begin(HOSTNAME)) {
+                MDNS.addService("http", "tcp", 80);  // lets apps discover the web server
+                Serial.println("mDNS: http://" HOSTNAME ".local");
+            } else {
+                Serial.println("mDNS failed to start");
+            }
+
             wifiState = WifiState::Connected;
         }
         else if (millis() - connectStart > 15000) // 15 seconds timeout
