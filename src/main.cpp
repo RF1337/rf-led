@@ -15,6 +15,8 @@ void setup() {
 
   pinMode(ONBOARD_LED, OUTPUT);
 
+  loadLedState(current_led_state);
+
   ledsBegin();
 
   wifiBegin();
@@ -22,6 +24,7 @@ void setup() {
 }
 
 void loop() {
+  controllerLoop();
   wifiLoop();
   apiLoop();
 

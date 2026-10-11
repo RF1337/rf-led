@@ -86,6 +86,7 @@ void handleSetState() {
             return;
         }
     }
+    markStateChanged();
     sendState();
 }
 
