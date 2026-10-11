@@ -21,7 +21,7 @@ void ledsBegin() {
   for (const CRGB &c : colors) {
     fill_solid(leds, NUM_LEDS, c);
     ledsShow();
-    delay(2000);
+    delay(1000);
   }
 }
 

@@ -6,6 +6,7 @@
 #include "storage/storage.h"
 #include <DNSServer.h>
 #include <ESPmDNS.h>
+#include "ota/ota.h"
 
 #define HOSTNAME "rf-led"   // reachable as http://rf-led.local
 
@@ -51,6 +52,7 @@ void onConnected(){
             }
 
             wifiState = WifiState::Connected;
+            otaBegin();  // Start OTA
 }
 
 void wifiBegin()

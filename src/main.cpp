@@ -7,6 +7,7 @@
 #include "network/wifi.h"
 #include "network/api.h"
 #include "storage/storage.h"
+#include "ota/ota.h"
 
 void setup() {
   Serial.begin(115200);
@@ -27,6 +28,7 @@ void loop() {
   controllerLoop();
   wifiLoop();
   apiLoop();
+  otaLoop();
 
   if (current_led_state.on) {
     ledsSetBrightness(current_led_state.brightness);
