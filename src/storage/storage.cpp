@@ -28,6 +28,8 @@ void saveLedState(const led_state &s) {
   preferences.putUChar("r", s.color.r);
   preferences.putUChar("g", s.color.g);
   preferences.putUChar("b", s.color.b);
+  preferences.putUChar("effect", s.effect);
+  preferences.putUChar("speed", s.speed);
   preferences.end();
 }
 
@@ -37,5 +39,7 @@ void loadLedState(led_state &s) {
   s.brightness = preferences.getUChar("brightness", s.brightness);
   s.white = preferences.getUChar("white", s.white);
   s.color = CRGB(preferences.getUChar("r", s.color.r), preferences.getUChar("g", s.color.g), preferences.getUChar("b", s.color.b));
+  s.effect = preferences.getUChar("effect", s.effect);
+  s.speed = preferences.getUChar("speed", s.speed);
   preferences.end();
 }

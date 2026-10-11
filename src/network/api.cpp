@@ -44,6 +44,8 @@ void sendState() {
   doc["on"] = current_led_state.on;
   doc["brightness"] = current_led_state.brightness;
   doc["white"] = current_led_state.white;
+  doc["effect"] = current_led_state.effect;
+  doc["speed"] = current_led_state.speed;
   JsonArray color = doc["color"].to<JsonArray>();
   color.add(current_led_state.color.r);
   color.add(current_led_state.color.g);
@@ -89,6 +91,21 @@ void handleSetState() {
     }
     if (doc["white"].is<uint8_t>()) {
         current_led_state.white = doc["white"];
+    }
+
+    // Effects
+    if (!doc["effect"].isNull()) {  // only validate if "effect" was sent
+        int effect = doc["effect"] | -1;
+        if (effect < 0 || effect >= Effect_Count) {
+            server.send(400, "application/json", "{\"error\": \"Invalid effect value\"}");
+            return;
+        }
+        current_led_state.effect = effect;
+    }
+
+    // Effect speed
+    if (doc["speed"].is<uint8_t>()) {
+        current_led_state.speed = doc["speed"];
     }
 
     markStateChanged();

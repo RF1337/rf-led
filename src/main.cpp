@@ -8,6 +8,7 @@
 #include "network/api.h"
 #include "storage/storage.h"
 #include "ota/ota.h"
+#include "effects/effects.h"
 
 void setup() {
   Serial.begin(115200);
@@ -32,7 +33,7 @@ void loop() {
 
   if (current_led_state.on) {
     ledsSetBrightness(current_led_state.brightness);
-    fill_solid(leds, NUM_LEDS, current_led_state.color);
+    effectsRender(current_led_state);
     ledsSetWhite(current_led_state.white);
   } else {
     fill_solid(leds, NUM_LEDS, CRGB::Black);
