@@ -24,6 +24,7 @@ void saveLedState(const led_state &s) {
   preferences.begin("led", false);
   preferences.putBool("on", s.on);
   preferences.putUChar("brightness", s.brightness);
+  preferences.putUChar("white", s.white);
   preferences.putUChar("r", s.color.r);
   preferences.putUChar("g", s.color.g);
   preferences.putUChar("b", s.color.b);
@@ -34,6 +35,7 @@ void loadLedState(led_state &s) {
   preferences.begin("led", false);
   s.on = preferences.getBool("on", s.on);
   s.brightness = preferences.getUChar("brightness", s.brightness);
+  s.white = preferences.getUChar("white", s.white);
   s.color = CRGB(preferences.getUChar("r", s.color.r), preferences.getUChar("g", s.color.g), preferences.getUChar("b", s.color.b));
   preferences.end();
 }

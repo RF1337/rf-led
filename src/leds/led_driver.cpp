@@ -9,6 +9,12 @@ CRGB leds[NUM_LEDS];
 // FastLED is only used for color math on leds[]; NeoPixel sends it to the RGBW strip
 Adafruit_NeoPixel strip(NUM_LEDS, LED_PIN, NEO_GRBW + NEO_KHZ800);
 
+static uint8_t whiteLevel = 0;
+
+void ledsSetWhite(uint8_t w) {
+  whiteLevel = w;
+}
+
 void ledsSetBrightness(uint8_t b) {
   strip.setBrightness(b);
 }
@@ -27,7 +33,7 @@ void ledsBegin() {
 
 void ledsShow() {
   for (int i = 0; i < NUM_LEDS; i++) {
-    strip.setPixelColor(i, leds[i].r, leds[i].g, leds[i].b, 0);  // white channel off for now
+    strip.setPixelColor(i, leds[i].r, leds[i].g, leds[i].b, whiteLevel);
   }
   strip.show();
 }

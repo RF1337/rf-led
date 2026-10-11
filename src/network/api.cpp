@@ -43,6 +43,7 @@ void sendState() {
   JsonDocument doc;
   doc["on"] = current_led_state.on;
   doc["brightness"] = current_led_state.brightness;
+  doc["white"] = current_led_state.white;
   JsonArray color = doc["color"].to<JsonArray>();
   color.add(current_led_state.color.r);
   color.add(current_led_state.color.g);
@@ -69,13 +70,13 @@ void handleSetState() {
       return;
     }
     // Process the deserialized JSON data
-    if (doc.containsKey("on")) {
+    if (doc["on"].is<bool>()) {
         current_led_state.on = doc["on"];
     }
-    if (doc.containsKey("brightness")) {
+    if (doc["brightness"].is<uint8_t>()) {
         current_led_state.brightness = doc["brightness"];
     }
-    if (doc.containsKey("color")) {
+    if (doc["color"].is<JsonArray>()) {
         JsonArray color = doc["color"].as<JsonArray>();
         if (color.size() == 3) {
             current_led_state.color.r = color[0];
@@ -86,6 +87,10 @@ void handleSetState() {
             return;
         }
     }
+    if (doc["white"].is<uint8_t>()) {
+        current_led_state.white = doc["white"];
+    }
+
     markStateChanged();
     sendState();
 }
