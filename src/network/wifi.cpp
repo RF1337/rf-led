@@ -22,8 +22,15 @@ enum class WifiState
 WifiState wifiState;
 uint32_t connectStart;
 
+String savedSsid, savedPassword;
+
+uint32_t lastRetry;
+bool retrying = false;
+
 void startAP(){
-    WiFi.mode(WIFI_AP);
+    WiFi.disconnect();
+    WiFi.mode(WIFI_AP_STA);
+    lastRetry = millis();
     WiFi.softAP("rf-led", "rfled123");
     dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
     Serial.println("Started AP mode. Connect to rf-led with password rfled123");
@@ -32,31 +39,7 @@ void startAP(){
     wifiState = WifiState::ApMode;
 }
 
-void wifiBegin()
-{
-    String ssid, password;
-
-    if (!loadWifiCredentials(ssid, password)) {
-        Serial.println("No WiFi credentials found. Starting AP mode.");
-        startAP();
-        return;
-    } 
-    else
-    {
-        WiFi.setHostname(HOSTNAME);  // name shown in the router's device list
-        WiFi.mode(WIFI_STA);
-        WiFi.begin(ssid.c_str(), password.c_str());
-        connectStart = millis();
-        wifiState = WifiState::Connecting;
-    }
-}
-
-void wifiLoop()
-{
-    if (wifiState == WifiState::Connecting)
-    {
-        if (WiFi.status() == WL_CONNECTED)
-        {
+void onConnected(){
             Serial.print("Connected to WiFi. IP address: ");
             Serial.println(WiFi.localIP());
 
@@ -68,6 +51,32 @@ void wifiLoop()
             }
 
             wifiState = WifiState::Connected;
+}
+
+void wifiBegin()
+{
+    if (!loadWifiCredentials(savedSsid, savedPassword)) {
+        Serial.println("No WiFi credentials found. Starting AP mode.");
+        startAP();
+        return;
+    } 
+    else
+    {
+        WiFi.setHostname(HOSTNAME);  // name shown in the router's device list
+        WiFi.mode(WIFI_STA);
+        WiFi.begin(savedSsid.c_str(), savedPassword.c_str());
+        connectStart = millis();
+        wifiState = WifiState::Connecting;
+    }
+}
+
+void wifiLoop()
+{
+    if (wifiState == WifiState::Connecting)
+    {
+        if (WiFi.status() == WL_CONNECTED)
+        {
+            onConnected();
         }
         else if (millis() - connectStart > 15000) // 15 seconds timeout
         {
@@ -79,5 +88,25 @@ void wifiLoop()
     if (wifiState == WifiState::ApMode)
     {
         dnsServer.processNextRequest();
+        if (WiFi.status() == WL_CONNECTED)
+        {
+            dnsServer.stop();
+            WiFi.softAPdisconnect(true);
+            WiFi.mode(WIFI_STA);
+            retrying = false;
+            onConnected();
+        }
+        else if (retrying && millis() - lastRetry > 10000)
+        {
+            WiFi.disconnect();
+            retrying = false;
+        }
+        else if (!retrying && savedSsid.length() > 0 && WiFi.softAPgetStationNum() == 0 && millis() - lastRetry > 60000) // if no clients connected, try to connect to saved WiFi
+        {
+            Serial.println("Retrying to connect to saved WiFi: ");
+            WiFi.begin(savedSsid.c_str(), savedPassword.c_str());
+            retrying = true;
+            lastRetry = millis();
+        }
     }
 }
