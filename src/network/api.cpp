@@ -3,6 +3,7 @@
 #include <ArduinoJson.h>
 #include "controller/controller.h"
 #include "storage/storage.h"
+#include "effects/effects.h"
 
 WebServer server(80);
 
@@ -39,7 +40,8 @@ const char SETUP_PAGE[] = R"rawliteral(
 </html>
 )rawliteral";
 
-void sendState() {
+void sendState()
+{
   JsonDocument doc;
   doc["on"] = current_led_state.on;
   doc["brightness"] = current_led_state.brightness;
@@ -50,94 +52,132 @@ void sendState() {
   color.add(current_led_state.color.r);
   color.add(current_led_state.color.g);
   color.add(current_led_state.color.b);
-  String response; serializeJson(doc, response);
+  String response;
+  serializeJson(doc, response);
   server.send(200, "application/json", response);
 }
 
-void handleNotFound() {
+void handleNotFound()
+{
   server.sendHeader("Location", "http://" + WiFi.softAPIP().toString() + "/", true);
   server.send(302, "text/plain", "");
 }
 
-void handleGetState() {
+void handleGetState()
+{
   sendState();
 }
 
-void handleSetState() {
-    String body = server.arg("plain");
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, body);
-    if (error) {
-      server.send(400, "application/json", "{\"error\": \"Invalid JSON\"}");
-      return;
-    }
-    // Process the deserialized JSON data
-    if (doc["on"].is<bool>()) {
-        current_led_state.on = doc["on"];
-    }
-    if (doc["brightness"].is<uint8_t>()) {
-        current_led_state.brightness = doc["brightness"];
-    }
-    if (doc["color"].is<JsonArray>()) {
-        JsonArray color = doc["color"].as<JsonArray>();
-        if (color.size() == 3) {
-            current_led_state.color.r = color[0];
-            current_led_state.color.g = color[1];
-            current_led_state.color.b = color[2];
-        } else {
-            server.send(400, "application/json", "{\"error\": \"Color array must have 3 elements\"}");
-            return;
-        }
-    }
-    if (doc["white"].is<uint8_t>()) {
-        current_led_state.white = doc["white"];
-    }
-
-    // Effects
-    if (!doc["effect"].isNull()) {  // only validate if "effect" was sent
-        int effect = doc["effect"] | -1;
-        if (effect < 0 || effect >= Effect_Count) {
-            server.send(400, "application/json", "{\"error\": \"Invalid effect value\"}");
-            return;
-        }
-        current_led_state.effect = effect;
-    }
-
-    // Effect speed
-    if (doc["speed"].is<uint8_t>()) {
-        current_led_state.speed = doc["speed"];
-    }
-
-    markStateChanged();
-    sendState();
+void handleGetEffects()
+{
+  JsonDocument doc;
+  JsonArray arr = doc.to<JsonArray>();
+  for (int i = 0; i < Effect_Count; i++)
+  {
+    JsonObject o = arr.add<JsonObject>();
+    o["id"] = i;
+    o["name"] = effectInfo(i).name;
+    o["usesColor"] = effectInfo(i).usesColor;
+    o["usesSpeed"] = effectInfo(i).usesSpeed;
+  }
+  String response;
+  serializeJson(doc, response);
+  server.send(200, "application/json", response);
 }
 
-void handleSetupPage() {
+void handleSetState()
+{
+  String body = server.arg("plain");
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, body);
+  if (error)
+  {
+    server.send(400, "application/json", "{\"error\": \"Invalid JSON\"}");
+    return;
+  }
+  // Process the deserialized JSON data
+  if (doc["on"].is<bool>())
+  {
+    current_led_state.on = doc["on"];
+  }
+  if (doc["brightness"].is<uint8_t>())
+  {
+    current_led_state.brightness = doc["brightness"];
+  }
+  if (doc["color"].is<JsonArray>())
+  {
+    JsonArray color = doc["color"].as<JsonArray>();
+    if (color.size() == 3)
+    {
+      current_led_state.color.r = color[0];
+      current_led_state.color.g = color[1];
+      current_led_state.color.b = color[2];
+    }
+    else
+    {
+      server.send(400, "application/json", "{\"error\": \"Color array must have 3 elements\"}");
+      return;
+    }
+  }
+  if (doc["white"].is<uint8_t>())
+  {
+    current_led_state.white = doc["white"];
+  }
+
+  // Effects
+  if (!doc["effect"].isNull())
+  { // only validate if "effect" was sent
+    int effect = doc["effect"] | -1;
+    if (effect < 0 || effect >= Effect_Count)
+    {
+      server.send(400, "application/json", "{\"error\": \"Invalid effect value\"}");
+      return;
+    }
+    current_led_state.effect = effect;
+  }
+
+  // Effect speed
+  if (doc["speed"].is<uint8_t>())
+  {
+    current_led_state.speed = doc["speed"];
+  }
+
+  markStateChanged();
+  sendState();
+}
+
+void handleSetupPage()
+{
   server.send(200, "text/html", SETUP_PAGE);
 }
 
-void handleSaveWifi() {
+void handleSaveWifi()
+{
   String ssid = server.arg("ssid");
   String password = server.arg("password");
-  if (ssid.isEmpty()) {
+  if (ssid.isEmpty())
+  {
     server.send(400, "text/plain", "WiFi name can't be empty");
     return;
   }
   saveWifiCredentials(ssid, password);
   server.send(200, "text/plain", "Saved! Restarting and connecting to " + ssid + "...");
-  delay(1000);  // let the response reach the phone before restarting
+  delay(1000); // let the response reach the phone before restarting
   ESP.restart();
 }
 
-void apiBegin() {
+void apiBegin()
+{
   server.on("/", HTTP_GET, handleSetupPage);
   server.on("/wifi", HTTP_POST, handleSaveWifi);
   server.on("/api/state", HTTP_GET, handleGetState);
   server.on("/api/state", HTTP_POST, handleSetState);
+  server.on("/api/effects", HTTP_GET, handleGetEffects);
   server.onNotFound(handleNotFound);
   server.begin();
 }
 
-void apiLoop() {
+void apiLoop()
+{
   server.handleClient();
 }

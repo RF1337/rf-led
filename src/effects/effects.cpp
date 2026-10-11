@@ -112,6 +112,27 @@ static void fire(const led_state &s) {
     }
 }
 
+static const EffectInfo EFFECTS[] = {
+    {"Static",  true,  false},
+    {"Rainbow", false, true},
+    {"Blink",   true,  true},
+    {"Breathing", true, true},
+    {"Color Wipe", true, true},
+    {"Theater Chase", true, true},
+    {"Cylon",   true,  true},
+    {"Sparkle", true,  true},
+    {"Fire",    false, true}
+};
+
+const EffectInfo &effectInfo(uint8_t id) {
+    if (id >= Effect_Count) id = 0;
+    return EFFECTS[id];
+}
+
+static_assert(sizeof(EFFECTS) / sizeof(EFFECTS[0]) == Effect_Count,
+              "EFFECTS table must match the Effect enum");
+
+
 void effectsRender(const led_state &s) {
     switch (s.effect) {
         case Effect_Static:       solid(s);        break;
