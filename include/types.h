@@ -1,5 +1,6 @@
 #pragma once
 #include <FastLED.h>
+#include "config.h"
 
 struct led_state 
 {
@@ -9,6 +10,7 @@ struct led_state
     uint8_t white = 0;
     uint8_t effect = 0; // 0 = static, 1 = rainbow, 2 = blink, etc.
     uint8_t speed = 128; // speed of the effect, if applicable
+    uint16_t maxCurrent = DEFAULT_MAX_CURRENT_MA; // LED power budget in mA, 0 = hardware max
 };
 
 enum Effect : uint8_t {

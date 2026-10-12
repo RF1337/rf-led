@@ -30,6 +30,7 @@ void saveLedState(const led_state &s) {
   preferences.putUChar("b", s.color.b);
   preferences.putUChar("effect", s.effect);
   preferences.putUChar("speed", s.speed);
+  preferences.putUShort("maxCurrent", s.maxCurrent);
   preferences.end();
 }
 
@@ -41,5 +42,6 @@ void loadLedState(led_state &s) {
   s.color = CRGB(preferences.getUChar("r", s.color.r), preferences.getUChar("g", s.color.g), preferences.getUChar("b", s.color.b));
   s.effect = preferences.getUChar("effect", s.effect);
   s.speed = preferences.getUChar("speed", s.speed);
+  s.maxCurrent = preferences.getUShort("maxCurrent", s.maxCurrent);
   preferences.end();
 }

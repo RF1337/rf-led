@@ -31,6 +31,8 @@ void loop() {
   apiLoop();
   otaLoop();
 
+  ledsSetMaxCurrent(current_led_state.maxCurrent);
+
   if (current_led_state.on) {
     ledsSetBrightness(current_led_state.brightness);
     effectsRender(current_led_state);

@@ -10,3 +10,6 @@ void ledsBegin();
 void ledsShow();
 
 void ledsSetWhite(uint8_t w);
+
+void ledsSetMaxCurrent(uint16_t mA);  // clamped to HARDWARE_MAX_CURRENT_MA; 0 = hardware max
+uint16_t ledsEstimatedCurrent();      // mA of the last frame, after limiting

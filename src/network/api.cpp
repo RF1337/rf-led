@@ -4,6 +4,7 @@
 #include "controller/controller.h"
 #include "storage/storage.h"
 #include "effects/effects.h"
+#include "leds/led_driver.h"
 
 WebServer server(80);
 
@@ -83,6 +84,47 @@ void handleGetEffects()
   String response;
   serializeJson(doc, response);
   server.send(200, "application/json", response);
+}
+
+void sendPower()
+{
+  JsonDocument doc;
+  doc["maxCurrent"] = current_led_state.maxCurrent;
+  doc["estimatedCurrent"] = ledsEstimatedCurrent();
+  doc["hardwareMax"] = HARDWARE_MAX_CURRENT_MA;
+  String response;
+  serializeJson(doc, response);
+  server.send(200, "application/json", response);
+}
+
+void handleGetPower()
+{
+  sendPower();
+}
+
+void handleSetPower()
+{
+  JsonDocument doc;
+  if (deserializeJson(doc, server.arg("plain")))
+  {
+    server.send(400, "application/json", "{\"error\": \"Invalid JSON\"}");
+    return;
+  }
+
+  if (!doc["maxCurrent"].isNull())
+  {
+    // 0 = hardware max, otherwise at least 100mA so the strip can still light up
+    long mA = doc["maxCurrent"] | -1L;
+    if (mA != 0 && (mA < 100 || mA > HARDWARE_MAX_CURRENT_MA))
+    {
+      server.send(400, "application/json",
+                  "{\"error\": \"maxCurrent must be 0 or 100-" + String(HARDWARE_MAX_CURRENT_MA) + "\"}");
+      return;
+    }
+    current_led_state.maxCurrent = mA;
+    markStateChanged();
+  }
+  sendPower();
 }
 
 void handleSetState()
@@ -173,6 +215,8 @@ void apiBegin()
   server.on("/api/state", HTTP_GET, handleGetState);
   server.on("/api/state", HTTP_POST, handleSetState);
   server.on("/api/effects", HTTP_GET, handleGetEffects);
+  server.on("/api/power", HTTP_GET, handleGetPower);
+  server.on("/api/power", HTTP_POST, handleSetPower);
   server.onNotFound(handleNotFound);
   server.begin();
 }
